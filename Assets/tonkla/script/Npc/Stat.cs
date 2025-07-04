@@ -57,9 +57,30 @@ public class Stat : MonoBehaviour
         _fly -= 1f;
         _drive -= 1f;
     }
+    public StatData ToData()
+    {
+        return new StatData
+        {
+            health = _health,
+            strength = _strength,
+            weight = _weight,
+            resistanceIliness = _resistanceIliness,
+            resistanceEnv = _resistanceEnv,
+            fly = _fly,
+            drive = _drive
+        };
+    }
 
-    private void Update() {
-        
+    // Apply values from StatData
+    public void FromData(StatData data)
+    {
+        _health = data.health;
+        _strength = data.strength;
+        _weight = data.weight;
+        _resistanceIliness = data.resistanceIliness;
+        _resistanceEnv = data.resistanceEnv;
+        _fly = data.fly;
+        _drive = data.drive;
     }
 
 }

@@ -43,9 +43,16 @@ public class Vision : MonoBehaviour
             {
                 visibleGameObject.Add(hit.gameObject);
             }
-
-
         }
+
+        visibleGameObject.Sort((a, b) =>
+        {
+            float distA = Vector3.Distance(transform.position, a.transform.position);
+            float distB = Vector3.Distance(transform.position, b.transform.position);
+
+            return distA.CompareTo(distB);
+        });
+        
         return visibleGameObject;
     }
     
