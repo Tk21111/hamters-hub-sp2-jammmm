@@ -632,33 +632,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8335397983448832250, guid: c9ef3a9d567cfda4383341ce20072775, type: 3}
   m_PrefabInstance: {fileID: 823225991779774866}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &852870756
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 852870751}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ebef77a72c34ea4aa22c6adf81b4ea2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  currentState: 0
-  seekableFoodTags: []
-  woodSourceTag: WoodSource
-  woodNeededForHouse: 10
-  houseConstructionPrefab: {fileID: 0}
-  finishedHousePrefab: {fileID: 0}
-  moveSpeed: 5
-  stopDistance: 1
-  roamRadius: 5
-  roamDelay: 2
-  roamInterestTags:
-  - tree
-  - water
-  - npc
-  currentBiome: 0
 --- !u!114 &852870757
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -678,7 +651,34 @@ MonoBehaviour:
   _resistanceEnv: 0
   _fly: 0
   _drive: 0
---- !u!114 &852870758
+--- !u!114 &852870763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 852870751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ebef77a72c34ea4aa22c6adf81b4ea2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentState: 1
+  seekableFoodTags: []
+  woodSourceTag: WoodSource
+  woodNeededForHouse: 10
+  houseConstructionPrefab: {fileID: 0}
+  finishedHousePrefab: {fileID: 0}
+  moveSpeed: 5
+  stopDistance: 1
+  roamRadius: 10
+  roamDelay: 3
+  roamInterestTags:
+  - tree
+  - water
+  - npc
+  currentBiome: 0
+--- !u!114 &852870764
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -696,8 +696,11 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   targetTagsToLookFor:
+  - tree
   - food
   - food_runable
+  - water
+  - npc
 --- !u!1 &1134852681
 GameObject:
   m_ObjectHideFlags: 0
@@ -1085,13 +1088,13 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8335397983448832250, guid: c9ef3a9d567cfda4383341ce20072775, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 852870758}
-    - targetCorrespondingSourceObject: {fileID: 8335397983448832250, guid: c9ef3a9d567cfda4383341ce20072775, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 852870757}
     - targetCorrespondingSourceObject: {fileID: 8335397983448832250, guid: c9ef3a9d567cfda4383341ce20072775, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 852870756}
+      addedObject: {fileID: 852870764}
+    - targetCorrespondingSourceObject: {fileID: 8335397983448832250, guid: c9ef3a9d567cfda4383341ce20072775, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 852870763}
   m_SourcePrefab: {fileID: 100100000, guid: c9ef3a9d567cfda4383341ce20072775, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

@@ -216,6 +216,7 @@ public class BaseAI : MonoBehaviour
             return null;
 
         // Look for objects with interesting tags
+        List<GameObject> matchTag = new List<GameObject>();
         foreach (GameObject obj in visibleObjects)
         {
             foreach (string tag in roamInterestTags)
@@ -225,7 +226,7 @@ public class BaseAI : MonoBehaviour
                     // Check if it's within roam radius from anchor point
                     if (Vector3.Distance(roamAnchorPoint, obj.transform.position) <= roamRadius)
                     {
-                        return obj.transform;
+                        matchTag.Add(obj);
                     }
                 }
             }
