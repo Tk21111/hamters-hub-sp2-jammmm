@@ -93,6 +93,11 @@ public class Stat : MonoBehaviour, IreciveAble
         {
             resource[itemName] = amount;
         }
+
+        // foreach (var rkv in resource)
+        // {
+        //     Debug.Log(rkv);
+        // }
     }
 
     public int GetAmount(string itemName)

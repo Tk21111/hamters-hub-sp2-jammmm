@@ -20,8 +20,10 @@ public class Vision : MonoBehaviour
         
         foreach (Collider hit in hits)
         {
+            ISeeAble seeAble = hit.gameObject.GetComponent<ISeeAble>();
 
-            if (hit.gameObject == gameObject)
+        
+            if (seeAble == null  || hit.gameObject == gameObject || seeAble.GetSeeAble())
                 continue;
 
             bool tagMatch = false;
@@ -43,7 +45,7 @@ public class Vision : MonoBehaviour
             }
 
             //check los
-            
+
             Vector3 vecToTarget = (hit.transform.position - transform.position).normalized;
             float distToTarget = Vector3.Distance(transform.position, hit.transform.position);
 
