@@ -11,6 +11,8 @@ public class GiveNpcItem : MonoBehaviour
         // Get receiver from the NPC
         IreciveAble receiver = other.GetComponent<IreciveAble>();
 
+        Debug.Log("ggg");
+
         if (giver != null && receiver != null)
         {
             receiver.ReciveItem(giver.GetItemName(), giver.GetItemAmount());

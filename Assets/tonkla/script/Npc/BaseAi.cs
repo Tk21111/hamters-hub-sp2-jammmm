@@ -69,6 +69,11 @@ public class BaseAI : Stat
         // {
         //     strength = 500
         // });
+
+        foreach (var kvp in resource)
+        {
+            Debug.Log($"Item: {kvp.Key}, Amount: {kvp.Value}");
+        }
     }
     #endregion
 

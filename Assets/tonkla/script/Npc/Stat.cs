@@ -68,7 +68,7 @@ public class Stat : MonoBehaviour, IreciveAble
         Debug.Log($"{gameObject.name} received {amount}x {itemName}");
 
         StatDelta delta = GetDeltaForItem(itemName, amount);
-        
+
         ApplyStatDelta(delta);
 
         // Add the items to inventory
@@ -80,7 +80,7 @@ public class Stat : MonoBehaviour, IreciveAble
 
     #region  storage sys
 
-    private Dictionary<string, int> resource = new Dictionary<string, int>();
+    protected Dictionary<string, int> resource = new Dictionary<string, int>();
 
 
     public void AddItem(string itemName, int amount)

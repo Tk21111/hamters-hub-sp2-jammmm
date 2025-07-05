@@ -43,7 +43,7 @@ public class Vision : MonoBehaviour
             }
 
             //check los
-            Debug.Log("hit");
+            
             Vector3 vecToTarget = (hit.transform.position - transform.position).normalized;
             float distToTarget = Vector3.Distance(transform.position, hit.transform.position);
 
