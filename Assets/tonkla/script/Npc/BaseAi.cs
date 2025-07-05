@@ -86,21 +86,27 @@ public class BaseAI : Stat
         }
 
         // SECOND PRIORITY: If in a forest and haven't built a house yet...
-        if (currentBiome == BiomeType.Forest && !hasBuiltHouse)
+         if (GetAmount("wood") > 10)
         {
-            if (woodCollected < woodNeededForHouse)
+            if (currentBiome == BiomeType.Forest && !hasBuiltHouse)
             {
-                currentState = AIState.CollectingWood;
+                if (woodCollected < woodNeededForHouse)
+                {
+                    currentState = AIState.CollectingWood;
+                }
+                else // We have enough wood
+                {
+                    currentState = AIState.BuildingHouse;
+                }
+                return;
             }
-            else // We have enough wood
-            {
-                currentState = AIState.BuildingHouse;
-            }
-            return;
         }
+      
 
         // DEFAULT STATE: If no other needs, just roam.
         currentState = AIState.Roaming;
+
+       
     }
 
     /// <summary>
@@ -172,6 +178,57 @@ public class BaseAI : Stat
         }
     }
 
+    #region Encourage
+   private void ImplementEncourage()
+    {
+        if (string.IsNullOrEmpty(_encouragedStat) || _encouragedStatTime <= 0)
+            return;
+
+        switch (_encouragedStat.ToLower())
+        {
+            case "strength":
+                Debug.Log($"{gameObject.name} feels strong and wants to BUILD something!");
+                // Trigger build behavior or task
+                break;
+
+            case "resistanceiliness":
+            case "resistanceenv":
+                Debug.Log($"{gameObject.name} feels tough and wants to EXPLORE dangerous areas!");
+                // Trigger explore behavior or movement to hazardous zones
+                break;
+
+            case "fly":
+                Debug.Log($"{gameObject.name} feels like FLYING!");
+                // Trigger flying logic or movement toward high points
+                break;
+
+            case "drive":
+                Debug.Log($"{gameObject.name} feels like DRIVING through water or terrain!");
+                // Trigger driving/movement toward water or vehicle
+                break;
+
+            case "intelligent":
+                Debug.Log($"{gameObject.name} feels smarter and wants to LEARN more!");
+                // Trigger interaction with books, NPCs, training, etc.
+                break;
+
+            default:
+                Debug.Log($"{gameObject.name} has encouragement for unknown stat: {_encouragedStat}");
+                break;
+        }
+
+        _encouragedStatTime--;
+
+        // Clear encouragement when time runs out
+        if (_encouragedStatTime <= 0)
+        {
+            Debug.Log($"{gameObject.name}'s encouraged state for {_encouragedStat} has ended.");
+            _encouragedStat = null;
+        }
+    }
+
+    #endregion
+
     private void ExecuteRoamingState()
     {
         // Check if we need a new roam target
@@ -198,7 +255,7 @@ public class BaseAI : Stat
             roamTarget = interestingTarget.position;
             hasRoamTarget = true;
             nextRoamTime = Time.time + roamDelay;
-            Debug.Log("Roaming towards: " + interestingTarget.name);
+            // Debug.Log("Roaming towards: " + interestingTarget.name);
         }
         else
         {
@@ -207,7 +264,7 @@ public class BaseAI : Stat
             roamTarget = roamAnchorPoint + new Vector3(randomCircle.x, 0, randomCircle.y);
             hasRoamTarget = true;
             nextRoamTime = Time.time + roamDelay;
-            Debug.Log("Roaming to random point");
+            // Debug.Log("Roaming to random point");
         }
     }
 
@@ -218,34 +275,41 @@ public class BaseAI : Stat
         if (visibleObjects.Count == 0)
             return null;
 
-        // Look for objects with interesting tags
-        List<GameObject> matchTag = new List<GameObject>();
+        List<GameObject> validTargets = new List<GameObject>();
+
         foreach (GameObject obj in visibleObjects)
         {
-            foreach (string tag in roamInterestTags)
+            if (obj.CompareTag("obstacle"))
+                continue;
+
+            if (Vector3.Distance(roamAnchorPoint, obj.transform.position) > roamRadius)
+                continue;
+
+            if (roamInterestTags.Length > 0 && !System.Array.Exists(roamInterestTags, tag => obj.CompareTag(tag)))
+                continue;
+
+            // Check for obstacles in the path using raycast
+            Vector3 dir = (obj.transform.position - transform.position).normalized;
+            float dist = Vector3.Distance(transform.position, obj.transform.position);
+
+            if (!Physics.Raycast(transform.position, dir, dist, LayerMask.GetMask("obstacle")) && _intelligent > 60f)
             {
-                if (obj.CompareTag(tag))
-                {
-                    // Check if it's within roam radius from anchor point
-                    if (Vector3.Distance(roamAnchorPoint, obj.transform.position) <= roamRadius)
-                    {
-                        matchTag.Add(obj);
-                    }
-                }
+                validTargets.Add(obj);
+            }
+            else
+            {
+                Debug.Log($"Blocked path to {obj.name}");
             }
         }
 
-        // If no interesting tagged objects, just pick a random visible object within range
-        foreach (GameObject obj in visibleObjects)
+        if (validTargets.Count > 0)
         {
-            if (Vector3.Distance(roamAnchorPoint, obj.transform.position) <= roamRadius)
-            {
-                return obj.transform;
-            }
+            return validTargets[Random.Range(0, validTargets.Count)].transform;
         }
 
         return null;
     }
+
 
     #endregion
 

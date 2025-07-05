@@ -9,6 +9,8 @@ TagManager:
   - food_runable
   - tree
   - water
+  - biome
+  - obtical
   layers:
   - Default
   - TransparentFX
@@ -16,8 +18,8 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
+  - basegame
+  - obstacle
   - 
   - 
   - 

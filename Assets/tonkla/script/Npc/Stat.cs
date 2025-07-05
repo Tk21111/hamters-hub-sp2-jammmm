@@ -1,26 +1,28 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-public class Stat : MonoBehaviour, IreciveAble
+public class Stat : MonoBehaviour, IreciveAble, IDamageAble
 {
-
- 
-
-
     public float _health = 100f;
 
-    //no eff by trick
+    // Not affected by trick
     public float _strength = 0f;
     public float _weight = 0f;
 
-    //eff by trick
+    // Affected by trick
     public float _resistanceIliness = 0f;
     public float _resistanceEnv = 0f;
     public float _fly = 0f;
     public float _drive = 0f;
+    public float _intelligent = 50f;
 
+    //encouraage
+    public string _encouragedStat;
+    public int _encouragedStatTime;
 
-
+    public float _encouragedStatCoolDown;
 
     public struct StatDelta
     {
@@ -31,19 +33,10 @@ public class Stat : MonoBehaviour, IreciveAble
         public float resistanceEnv;
         public float fly;
         public float drive;
+        public float intelligent;
     }
 
-    public void ApplyStatDelta(StatDelta delta)
-    {
-        _strength += delta.strength;
-        _health = Mathf.Clamp(_health + delta.health, 0, 100f);
-        _weight += delta.weight;
-        _resistanceIliness += delta.resistanceIliness;
-        _resistanceEnv += delta.resistanceEnv;
-        _fly += delta.fly;
-        _drive += delta.drive;
-    }
-
+    #region trick
     private void OnEnable()
     {
         TrickManager.OnTick += HandleTrick;
@@ -62,26 +55,30 @@ public class Stat : MonoBehaviour, IreciveAble
         _drive -= 1f;
     }
 
-    #region reviveAble
+    #endregion
+
+    #region Receiveable
+
     public void ReciveItem(string itemName, int amount)
     {
         Debug.Log($"{gameObject.name} received {amount}x {itemName}");
 
         StatDelta delta = GetDeltaForItem(itemName, amount);
 
+        // Apply the change
         ApplyStatDelta(delta);
 
-        // Add the items to inventory
+        // Add item to resource inventory
         AddItem(itemName, amount);
+
+
     }
+
     #endregion
 
-
-
-    #region  storage sys
+    #region Storage System
 
     protected Dictionary<string, int> resource = new Dictionary<string, int>();
-
 
     public void AddItem(string itemName, int amount)
     {
@@ -93,20 +90,11 @@ public class Stat : MonoBehaviour, IreciveAble
         {
             resource[itemName] = amount;
         }
-
-        // foreach (var rkv in resource)
-        // {
-        //     Debug.Log(rkv);
-        // }
     }
 
     public int GetAmount(string itemName)
     {
-        if (resource.TryGetValue(itemName, out int amount))
-        {
-            return amount;
-        }
-        return 0;
+        return resource.TryGetValue(itemName, out int amount) ? amount : 0;
     }
 
     public string GetMaxAmount()
@@ -126,25 +114,39 @@ public class Stat : MonoBehaviour, IreciveAble
         return maxResource;
     }
 
-    public bool useResource(string itemName ,  int amount)
+    public bool useResource(string itemName, int amount)
     {
         if (GetAmount(itemName) >= amount)
         {
             resource[itemName] -= amount;
-
             return true;
         }
         else
         {
-            Debug.Log("useResource : fail to use");
+            Debug.Log("useResource: failed to use");
             return false;
         }
     }
 
     #endregion
 
+    #region Stat Application
 
-    #region  Helper
+    public void ApplyStatDelta(StatDelta delta)
+    {
+
+        _strength += delta.strength;
+        _health = Mathf.Clamp(_health + delta.health, 0, 100f);
+        _weight += delta.weight;
+        _resistanceIliness += delta.resistanceIliness;
+        _resistanceEnv += delta.resistanceEnv;
+        _fly += delta.fly;
+        _drive += delta.drive;
+        _intelligent += delta.intelligent;
+
+        //set encouraged
+        GetEncouragedStat(delta);
+    }
 
     private StatDelta GetDeltaForItem(string itemName, int amount)
     {
@@ -168,7 +170,9 @@ public class Stat : MonoBehaviour, IreciveAble
             case "glider":
                 delta.fly = 1f * amount;
                 break;
-            // Add more items here as needed
+            case "book":
+                delta.intelligent = 3f * amount;
+                break;
             default:
                 Debug.LogWarning($"Unknown item: {itemName}");
                 break;
@@ -179,4 +183,56 @@ public class Stat : MonoBehaviour, IreciveAble
 
     #endregion
 
+    #region Damageable
+
+    public void Damage(float amount)
+    {
+        _health -= amount;
+        if (_health <= 0)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    #endregion
+
+    #region Encouragement System
+
+    private void GetEncouragedStat(StatDelta delta)
+    {
+        Dictionary<string, float> statChanges = new Dictionary<string, float>
+        {
+            { "strength", delta.strength },
+            { "health", delta.health },
+            { "weight", delta.weight },
+            { "resistanceIliness", delta.resistanceIliness },
+            { "resistanceEnv", delta.resistanceEnv },
+            { "fly", delta.fly },
+            { "drive", delta.drive },
+            { "intelligent", delta.intelligent }
+        };
+
+        string encouragedStat = null;
+        float maxChange = 0f;
+
+        foreach (var kvp in statChanges)
+        {
+            if (kvp.Value > maxChange)
+            {
+                maxChange = kvp.Value;
+                encouragedStat = kvp.Key;
+            }
+        }
+
+        if (encouragedStat != null)
+        {
+            Debug.Log($"[Encouragement] {gameObject.name} improved most in: {encouragedStat} (+{maxChange})");
+        }
+
+        _encouragedStat = encouragedStat;
+
+        _encouragedStatTime = Random.Range(1, 5);
+    }
+    
+    #endregion
 }
