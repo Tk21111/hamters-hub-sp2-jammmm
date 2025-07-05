@@ -13,17 +13,24 @@ public class Vision : MonoBehaviour
     public List<GameObject> GetGameObjectInSight()
     {
 
+        
+
         List<GameObject> visibleGameObject = new List<GameObject>();
         Collider[] hits = Physics.OverlapSphere(transform.position, _sightRadius);
-        Debug.Log(targetTagsToLookFor.Length);
-        foreach (Collider hit in hits) {
+        
+        foreach (Collider hit in hits)
+        {
+
+            if (hit.gameObject == gameObject)
+                continue;
+
             bool tagMatch = false;
 
             // Debug.Log(hit.gameObject.tag);
             foreach (string tag in targetTagsToLookFor)
             {
-                Debug.Log(tag);
-                if (hit.gameObject.tag == tag)
+
+                if (hit.CompareTag(tag))
                 {
                     tagMatch = true;
                     break;

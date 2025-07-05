@@ -12,7 +12,7 @@ public enum AIState
 }
 
 [RequireComponent(typeof(Vision), typeof(Stat))]
-public class BaseAI : MonoBehaviour
+public class BaseAI : Stat
 {
     [Header("State Machine")]
     [SerializeField] private AIState currentState = AIState.Roaming;
@@ -33,7 +33,7 @@ public class BaseAI : MonoBehaviour
     [Header("Behavior: Roaming")]
     public float roamRadius = 10f;
     public float roamDelay = 3f;
-    public string[] roamInterestTags = { "tree", "water" , "npc" };
+    public string[] roamInterestTags = { "tree", "water", "npc" };
 
     private Vector3 roamTarget;
     private float nextRoamTime = 0f;
@@ -49,13 +49,11 @@ public class BaseAI : MonoBehaviour
 
     // Components
     protected Vision vision;
-    protected Stat stat;
 
     #region Unity Lifecycle
     protected virtual void Awake()
     {
         vision = GetComponent<Vision>();
-        stat = GetComponent<Stat>();
         roamAnchorPoint = transform.position; // Set anchor point once at start
     }
 
@@ -66,6 +64,11 @@ public class BaseAI : MonoBehaviour
 
         // Executes the behavior for the current state.
         ExecuteCurrentState();
+
+        // ModifyStat(new StatDelta()
+        // {
+        //     strength = 500
+        // });
     }
     #endregion
 
@@ -76,7 +79,7 @@ public class BaseAI : MonoBehaviour
     private void UpdateStateTransitions()
     {
         // HIGHEST PRIORITY: Find food if health is low.
-        if (stat._health < 50f)
+        if (_health < 50f)
         {
             currentState = AIState.HuntingForFood;
             return; // Exit so we don't override this decision
@@ -189,7 +192,7 @@ public class BaseAI : MonoBehaviour
     {
         // First, try to find an interesting object to roam towards using vision
         Transform interestingTarget = FindInterestingRoamTarget();
-        
+
         if (interestingTarget != null)
         {
             roamTarget = interestingTarget.position;
@@ -290,6 +293,19 @@ public class BaseAI : MonoBehaviour
             currentBiome = BiomeType.None;
             Debug.Log("Exited " + biome);
         }
+    }
+    #endregion
+
+    #region Stat
+
+
+
+    public void ModifyStat(StatDelta delta)
+    {
+        ApplyStatDelta(delta);
+
+        Debug.Log($"{name} stat modified. New stats: " +
+            $"Health: {_health}, Strength: {_strength}, Fly: {_fly}, Drive: {_drive}");
     }
     #endregion
 }

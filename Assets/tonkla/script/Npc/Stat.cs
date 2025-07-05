@@ -1,7 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Stat : MonoBehaviour
+public class Stat : MonoBehaviour, IreciveAble
 {
+
+ 
+
 
     public float _health = 100f;
 
@@ -15,7 +19,7 @@ public class Stat : MonoBehaviour
     public float _fly = 0f;
     public float _drive = 0f;
 
-   
+
 
 
     public struct StatDelta
@@ -50,37 +54,124 @@ public class Stat : MonoBehaviour
         TrickManager.OnTick -= HandleTrick;
     }
 
-    public virtual void HandleTrick()
+    public void HandleTrick()
     {
         _resistanceIliness -= 1f;
         _resistanceEnv -= 1f;
         _fly -= 1f;
         _drive -= 1f;
     }
-    public StatData ToData()
+
+    #region reviveAble
+    public void ReciveItem(string itemName, int amount)
     {
-        return new StatData
+        Debug.Log($"{gameObject.name} received {amount}x {itemName}");
+
+        StatDelta delta = GetDeltaForItem(itemName, amount);
+        
+        ApplyStatDelta(delta);
+
+        // Add the items to inventory
+        AddItem(itemName, amount);
+    }
+    #endregion
+
+
+
+    #region  storage sys
+
+    private Dictionary<string, int> resource = new Dictionary<string, int>();
+
+
+    public void AddItem(string itemName, int amount)
+    {
+        if (resource.ContainsKey(itemName))
         {
-            health = _health,
-            strength = _strength,
-            weight = _weight,
-            resistanceIliness = _resistanceIliness,
-            resistanceEnv = _resistanceEnv,
-            fly = _fly,
-            drive = _drive
-        };
+            resource[itemName] += amount;
+        }
+        else
+        {
+            resource[itemName] = amount;
+        }
     }
 
-    // Apply values from StatData
-    public void FromData(StatData data)
+    public int GetAmount(string itemName)
     {
-        _health = data.health;
-        _strength = data.strength;
-        _weight = data.weight;
-        _resistanceIliness = data.resistanceIliness;
-        _resistanceEnv = data.resistanceEnv;
-        _fly = data.fly;
-        _drive = data.drive;
+        if (resource.TryGetValue(itemName, out int amount))
+        {
+            return amount;
+        }
+        return 0;
     }
+
+    public string GetMaxAmount()
+    {
+        string maxResource = null;
+        int maxAmount = 0;
+
+        foreach (var pair in resource)
+        {
+            if (pair.Value > maxAmount)
+            {
+                maxAmount = pair.Value;
+                maxResource = pair.Key;
+            }
+        }
+
+        return maxResource;
+    }
+
+    public bool useResource(string itemName ,  int amount)
+    {
+        if (GetAmount(itemName) >= amount)
+        {
+            resource[itemName] -= amount;
+
+            return true;
+        }
+        else
+        {
+            Debug.Log("useResource : fail to use");
+            return false;
+        }
+    }
+
+    #endregion
+
+
+    #region  Helper
+
+    private StatDelta GetDeltaForItem(string itemName, int amount)
+    {
+        StatDelta delta = new StatDelta();
+
+        switch (itemName.ToLower())
+        {
+            case "apple":
+                delta.health = 5f * amount;
+                break;
+            case "wood":
+                delta.strength = 1f * amount;
+                delta.weight = 0.5f * amount;
+                break;
+            case "medicine":
+                delta.resistanceIliness = 2f * amount;
+                break;
+            case "boots":
+                delta.drive = 1f * amount;
+                break;
+            case "glider":
+                delta.fly = 1f * amount;
+                break;
+            // Add more items here as needed
+            default:
+                Debug.LogWarning($"Unknown item: {itemName}");
+                break;
+        }
+
+        return delta;
+    }
+
+    #endregion
 
 }
