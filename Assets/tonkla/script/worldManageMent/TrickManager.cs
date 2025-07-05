@@ -46,6 +46,37 @@ public class TrickManager : MonoBehaviour
             float lenght = Random.Range(80f, 855f);
             yield return new WaitForSeconds(lenght);
             onEvent?.Invoke();
+            DecreaseNPCHealth();
+        }
+    }
+
+    private void DecreaseNPCHealth()
+    {
+        // Find all GameObjects with the "NPC" tag
+        GameObject[] npcs = GameObject.FindGameObjectsWithTag("npc");
+
+        if (npcs.Length == 0)
+        {
+            Debug.LogWarning("No GameObjects found with the tag 'NPC'. Make sure your NPCs have this tag.");
+            return;
+        }
+
+        Debug.Log($"Found {npcs.Length} NPCs. Decreasing their health.");
+
+        foreach (GameObject npc in npcs)
+        {
+            // Try to get the NPCHealth component from the GameObject
+            Stat stat = npc.GetComponent<Stat>();
+
+            if (stat != null)
+            {
+                
+                stat._health -= 10 / stat._resistanceEnv;
+            }
+            else
+            {
+                Debug.LogWarning($"GameObject '{npc.name}' with tag 'NPC' does not have an 'NPCHealth' component attached.");
+            }
         }
     }
 }

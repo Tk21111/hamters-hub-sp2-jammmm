@@ -11,6 +11,7 @@ TagManager:
   - water
   - biome
   - obtical
+  - obstacle
   layers:
   - Default
   - TransparentFX

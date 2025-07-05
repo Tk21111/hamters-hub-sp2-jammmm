@@ -82,6 +82,7 @@ public class Stat : MonoBehaviour, IreciveAble, IDamageAble
 
     public void AddItem(string itemName, int amount)
     {
+        Debug.Log("adddddd");
         if (resource.ContainsKey(itemName))
         {
             resource[itemName] += amount;

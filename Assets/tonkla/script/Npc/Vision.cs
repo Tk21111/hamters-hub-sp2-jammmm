@@ -3,73 +3,86 @@ using UnityEngine;
 
 public class Vision : MonoBehaviour
 {
-    //internal
     public Transform _target;
     public float _sightRadius = 10f;
-    public LayerMask obstacleMask; 
+    public LayerMask obstacleMask;
 
-    public string[] targetTagsToLookFor = { "tree" ,  "food" , "food_runable" , "water" , "npc"  };
+    public string[] targetTagsToLookFor = { "tree", "food", "food_runable", "water", "npc", "obstacle" };
 
+    /// <summary>
+    /// Normal vision check: tag match, seeAble, and not blocked by obstacle.
+    /// </summary>
     public List<GameObject> GetGameObjectInSight()
     {
+        return GetGameObjectInSightInternal(ignoreObstacles: false);
+    }
 
-        
+    /// <summary>
+    /// "Stupid" vision: ignores obstacles and visibility blocking.
+    /// </summary>
+    public List<GameObject> GetGameObjectInSightIgnoreObstacles()
+    {
+        return GetGameObjectInSightInternal(ignoreObstacles: true);
+    }
 
-        List<GameObject> visibleGameObject = new List<GameObject>();
+   private List<GameObject> GetGameObjectInSightInternal(bool ignoreObstacles)
+    {
+        List<GameObject> visibleGameObjects = new List<GameObject>();
         Collider[] hits = Physics.OverlapSphere(transform.position, _sightRadius);
-        
+
         foreach (Collider hit in hits)
         {
-            ISeeAble seeAble = hit.gameObject.GetComponent<ISeeAble>();
+            GameObject hitObj = hit.gameObject;
 
-        
-            if (seeAble == null  || hit.gameObject == gameObject || seeAble.GetSeeAble())
+            if (hitObj == gameObject) continue;
+
+            ISeeAble seeAble = hit.GetComponent<ISeeAble>();
+
+            if (seeAble == null || !seeAble.GetSeeAble())
+            {
                 continue;
+            }
 
+            // Match tag
             bool tagMatch = false;
-
-            // Debug.Log(hit.gameObject.tag);
             foreach (string tag in targetTagsToLookFor)
             {
-
-                if (hit.CompareTag(tag))
+                if (hitObj.CompareTag(tag))
                 {
                     tagMatch = true;
                     break;
                 }
             }
+            if (!tagMatch) continue;
 
-            if (!tagMatch)
+            // LOS check only if not ignoring obstacles
+            if (!ignoreObstacles)
             {
-                continue;
+                Vector3 dir = (hit.transform.position - transform.position).normalized;
+                float dist = Vector3.Distance(transform.position, hit.transform.position);
+
+                if (Physics.Raycast(transform.position, dir, dist, obstacleMask))
+                {
+                    continue;
+                }
             }
 
-            //check los
-
-            Vector3 vecToTarget = (hit.transform.position - transform.position).normalized;
-            float distToTarget = Vector3.Distance(transform.position, hit.transform.position);
-
-            // Raycast to check line of sight
-            if (!Physics.Raycast(transform.position, vecToTarget, distToTarget, obstacleMask))
-            {
-                visibleGameObject.Add(hit.gameObject);
-            }
+            visibleGameObjects.Add(hitObj);
         }
 
-        visibleGameObject.Sort((a, b) =>
+        // Sort by distance
+        visibleGameObjects.Sort((a, b) =>
         {
             float distA = Vector3.Distance(transform.position, a.transform.position);
             float distB = Vector3.Distance(transform.position, b.transform.position);
-
             return distA.CompareTo(distB);
         });
-        
-        return visibleGameObject;
+
+        return visibleGameObjects;
     }
-    
+
     private void OnDrawGizmosSelected()
     {
-        // Visualize detection radius
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, _sightRadius);
     }

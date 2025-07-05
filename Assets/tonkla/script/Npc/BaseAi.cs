@@ -8,7 +8,8 @@ public enum AIState
     Roaming,
     HuntingForFood,
     CollectingWood,
-    BuildingHouse
+    BuildingHouse,
+    DoSomethingStupid
 }
 
 [RequireComponent(typeof(Vision), typeof(Stat))]
@@ -21,7 +22,7 @@ public class BaseAI : Stat
     public string[] seekableFoodTags;
 
     [Header("Behavior: Building")]
-    public string woodSourceTag = "WoodSource";
+    public string woodSourceTag = "wood";
     public int woodNeededForHouse = 10;
     public GameObject houseConstructionPrefab;
     public GameObject finishedHousePrefab;
@@ -42,7 +43,6 @@ public class BaseAI : Stat
 
     // Internal State
     public BiomeType currentBiome = BiomeType.None;
-    private int woodCollected = 0;
     private bool hasBuiltHouse = false;
     private Transform currentTarget;
     private Transform houseConstructionSite;
@@ -64,11 +64,6 @@ public class BaseAI : Stat
 
         // Executes the behavior for the current state.
         ExecuteCurrentState();
-
-        // ModifyStat(new StatDelta()
-        // {
-        //     strength = 500
-        // });
     }
     #endregion
 
@@ -78,6 +73,17 @@ public class BaseAI : Stat
     /// </summary>
     private void UpdateStateTransitions()
     {
+
+         if (currentState == AIState.DoSomethingStupid)
+        {
+            return;
+        }
+        
+        if (currentTarget != null && Vector3.Distance(transform.position, currentTarget.position) > stopDistance)
+        {
+            return; // Still moving towards current target, don't change state
+        }
+
         // HIGHEST PRIORITY: Find food if health is low.
         if (_health < 50f)
         {
@@ -86,28 +92,23 @@ public class BaseAI : Stat
         }
 
         // SECOND PRIORITY: If in a forest and haven't built a house yet...
-         if (GetAmount("wood") > 10)
+        if (currentBiome == BiomeType.Forest && !hasBuiltHouse && currentState != AIState.DoSomethingStupid)
         {
-            if (currentBiome == BiomeType.Forest && !hasBuiltHouse)
+            if (GetAmount("wood") < woodNeededForHouse)
             {
-                if (woodCollected < woodNeededForHouse)
-                {
-                    currentState = AIState.CollectingWood;
-                }
-                else // We have enough wood
-                {
-                    currentState = AIState.BuildingHouse;
-                }
-                return;
+                currentState = AIState.CollectingWood;
             }
+            else // We have enough wood
+            {
+                currentState = AIState.BuildingHouse;
+            }
+            return;
         }
-      
 
         // DEFAULT STATE: If no other needs, just roam.
         currentState = AIState.Roaming;
-
-       
     }
+
 
     /// <summary>
     /// A simple switch to run the logic for the current state.
@@ -128,11 +129,38 @@ public class BaseAI : Stat
             case AIState.Roaming:
                 ExecuteRoamingState();
                 break;
+            case AIState.DoSomethingStupid:
+                ExecuteDoStupid();
+                break;
         }
+
+        
     }
     #endregion
 
     #region State Behaviors
+
+   private void ExecuteDoStupid()
+    {
+        
+        // If we don't have a target or we're stuck on current target
+        if (currentTarget == null)
+        {
+            FindTargetStupidly(new string[] { "water", "obstacle" });
+        }
+        
+        // Check if we're stuck (not moving towards target)
+        if (currentTarget != null && Vector3.Distance(transform.position, currentTarget.position) < stopDistance + 0.5f)
+        {
+            // We've reached the stupid target, transition back to roaming
+            currentTarget = null;
+            currentState = AIState.Roaming;
+            hasRoamTarget = false;
+            return;
+        }
+        
+        MoveTowardsTarget();
+    }
     private void ExecuteHuntingState()
     {
         // Find the closest food source
@@ -142,16 +170,28 @@ public class BaseAI : Stat
 
     private void ExecuteCollectingWoodState()
     {
-        FindTarget(new string[] { woodSourceTag });
+        // **MODIFICATION: Use the "stupid" targeting to find wood, ignoring obstacles.**
+        // This will make the AI walk into water or other hazards if the wood is on the other side.
+        if (currentTarget == null)
+        {
+            FindTargetStupidly(new string[] { woodSourceTag });
+        }
+
+        if (currentTarget == null)
+        {
+            // No wood found; fallback to roaming
+            currentState = AIState.Roaming;
+            hasRoamTarget = false;  // force pick new roam target
+            return;
+        }
+
         MoveTowardsTarget();
 
-        // If we've reached the wood source, "collect" it.
-        if (currentTarget != null && Vector3.Distance(transform.position, currentTarget.position) < stopDistance)
+        // Only change state when we've reached the wood target
+        if (Vector3.Distance(transform.position, currentTarget.position) <= stopDistance)
         {
-            woodCollected++;
-            Destroy(currentTarget.gameObject); // Consume the wood source
-            currentTarget = null; // Look for a new one
-            Debug.Log("Collected wood! Now have: " + woodCollected);
+            currentTarget = null; // Clear target
+            currentState = AIState.DoSomethingStupid;
         }
     }
 
@@ -179,7 +219,7 @@ public class BaseAI : Stat
     }
 
     #region Encourage
-   private void ImplementEncourage()
+    private void ImplementEncourage()
     {
         if (string.IsNullOrEmpty(_encouragedStat) || _encouragedStatTime <= 0)
             return;
@@ -243,6 +283,8 @@ public class BaseAI : Stat
             Vector3 direction = (roamTarget - transform.position).normalized;
             transform.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
         }
+
+
     }
 
     private void SetNewRoamTarget()
@@ -309,11 +351,48 @@ public class BaseAI : Stat
 
         return null;
     }
-
-
     #endregion
 
     #region Helper Methods
+    
+    /// <summary>
+    /// **NEW METHOD:** Finds a target without checking for obstacles.
+    /// This is the "stupid" version used to recklessly go after a goal.
+    /// </summary>
+   private void FindTargetStupidly(string[] tagsToFind)
+    {
+        currentTarget = null;
+        float closestDist = float.MaxValue;
+        GameObject closestTarget = null;
+
+        // Use vision that ignores obstacles for "stupid" targeting
+        foreach (GameObject obj in vision.GetGameObjectInSightIgnoreObstacles())
+        {
+            foreach (string tag in tagsToFind)
+            {
+                if (obj.CompareTag(tag))
+                {
+                    float distance = Vector3.Distance(transform.position, obj.transform.position);
+                    if (distance < closestDist)
+                    {
+                        closestDist = distance;
+                        closestTarget = obj;
+                    }
+                }
+            }
+        }
+        if (closestTarget != null)
+        {
+            Debug.Log($"Found a {closestTarget.tag} to go to, ignoring all obstacles!");
+            currentTarget = closestTarget.transform;
+        }
+    }
+
+
+    
+    /// <summary>
+    /// Finds the first available target with a valid tag.
+    /// </summary>
     private void FindTarget(string[] tagsToFind)
     {
         currentTarget = null; // Clear previous target
@@ -361,9 +440,6 @@ public class BaseAI : Stat
     #endregion
 
     #region Stat
-
-
-
     public void ModifyStat(StatDelta delta)
     {
         ApplyStatDelta(delta);
