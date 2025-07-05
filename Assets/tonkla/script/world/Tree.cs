@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class TreeGiveable : MonoBehaviour, IgiveAble
+public class TreeGiveable : MonoBehaviour, IgiveAble , ISeeAble
 {
     [SerializeField] private string itemName = "wood";
     [SerializeField] private int itemAmount = 1;
@@ -24,4 +24,8 @@ public class TreeGiveable : MonoBehaviour, IgiveAble
         return Time.time >= nextAvailableTime;
     }
 
+    public bool GetSeeAble()
+    {
+        return IsAvailable();
+    }
 }
