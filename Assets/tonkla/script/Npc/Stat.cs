@@ -17,7 +17,7 @@ public class Stat : MonoBehaviour
 
    
 
-
+    [System.Serializable]
     public struct StatDelta
     {
         public float strength;

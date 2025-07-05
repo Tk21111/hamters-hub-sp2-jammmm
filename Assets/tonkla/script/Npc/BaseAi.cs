@@ -33,7 +33,7 @@ public class BaseAI : MonoBehaviour
     [Header("Behavior: Roaming")]
     public float roamRadius = 10f;
     public float roamDelay = 3f;
-    public string[] roamInterestTags = { "tree", "water" , "npc" };
+    public string[] roamInterestTags = { "tree", "water", "npc" };
 
     private Vector3 roamTarget;
     private float nextRoamTime = 0f;
@@ -189,7 +189,7 @@ public class BaseAI : MonoBehaviour
     {
         // First, try to find an interesting object to roam towards using vision
         Transform interestingTarget = FindInterestingRoamTarget();
-        
+
         if (interestingTarget != null)
         {
             roamTarget = interestingTarget.position;
@@ -292,4 +292,10 @@ public class BaseAI : MonoBehaviour
         }
     }
     #endregion
+    
+    public void ModifyStat(Stat.StatDelta delta)
+    {
+        stat.ApplyStatDelta(delta);
+        Debug.Log($"{name} stat modified: Health: {stat._health}, Strength: {stat._strength}, Fly: {stat._fly}, Drive: {stat._drive}");
+    }
 }
