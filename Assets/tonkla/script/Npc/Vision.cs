@@ -78,6 +78,7 @@ public class Vision : MonoBehaviour
             return distA.CompareTo(distB);
         });
 
+        Debug.Log(visibleGameObjects.Count);
         return visibleGameObjects;
     }
 

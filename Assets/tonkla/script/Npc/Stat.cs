@@ -234,6 +234,9 @@ public class Stat : MonoBehaviour, IreciveAble, IDamageAble
 
         _encouragedStatTime = Random.Range(1, 5);
     }
-    
+
     #endregion
+    
+    protected virtual void Update() { }
+
 }
